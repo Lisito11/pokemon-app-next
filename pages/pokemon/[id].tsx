@@ -1,7 +1,6 @@
 import { Layout } from '@/components/layouts'
 import { GetStaticProps, GetStaticPaths, NextPage } from 'next';
 import { Pokemon } from '@/interfaces';
-import { pokeApi } from '@/api';
 import { Button, Card, Container, Grid, Text } from '@nextui-org/react';
 import { useState } from 'react';
 import { getPokemonInfo, localFavorites } from '@/utils';
@@ -80,16 +79,28 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
     paths: pokemons151.map(id => ({
       params: { id }
     })),
-    fallback: false //404
+    // fallback: false //404
+    fallback: 'blocking'
   }
 }
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const { id } = params as { id: string };
+  const pokemon = await getPokemonInfo(id);
+
+  if (!pokemon) {
+      return {
+        redirect: {
+          destination: '/',
+          permanent: false
+        }
+      }
+  }
   return {
     props: {
-      pokemon: await getPokemonInfo(id)
-    }
+      pokemon
+    },
+    revalidate: 86400 //Se valida la pagina cada 24 horas
   }
 }
 
